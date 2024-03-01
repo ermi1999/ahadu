@@ -10,10 +10,12 @@ void initChunk(Chunk *chunk) {
   chunk->count = 0;
   chunk->capacity = 0;
   chunk->code = NULL;
+  initValueArray(&chunk->constants);
 }
 
 void freeChunk(Chunk *chunk) {
   FREE_ARRAY(uint8_t, chunk->code, chunk->capacity);
+  freeValueArray(&chunk->constants)
   initChunk(chunk);
 }
 
@@ -33,4 +35,15 @@ void writeChunk(Chunk *chunk, uint8_t byte) {
 
   chunk->code[chunk->count] = byte;
   chunk->count++;
+}
+
+/**
+ * addConstant - adds a new constant to the constants array in the chunk
+ * @chunk: the chunk.
+ * @value: the value that is going to be added to the constants array.
+ * Return: the index of the newly added constant.
+ */
+int addConstant(Chunk* chunk, Value value) {
+  writeValueArray(&chunk->constants, value);
+  return chunk->constants.count - 1;
 }
