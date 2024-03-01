@@ -2,7 +2,7 @@
 #define AHADU_COMMON_H
 
 #include <stdbool.h>
-#include <stdeff.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #endif
