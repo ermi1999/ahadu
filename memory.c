@@ -1,5 +1,5 @@
 #include "memory.h"
-#include <stdilb.h>
+#include <stdlib.h>
 
 /**
  * reallocate - handles the realocation of a dynamic array.
