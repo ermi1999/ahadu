@@ -6,6 +6,10 @@
 
 #define STACK_MAX 256
 
+/**
+ * @chunk: the chunk that the vm executs
+ * @ip: the location of the current instruction.
+ */
 typedef struct {
   Chunk *chunk;
   uint8_t *ip;
@@ -13,6 +17,9 @@ typedef struct {
   Value *stackTop;
 } VM;
 
+/**
+ * InterpretResult - defines the interpretion process results.
+ */
 typedef enum {
   INTERPRET_OK,
   INTERPRET_COMPILE_ERROR,

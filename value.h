@@ -5,6 +5,12 @@
 
 typedef double Value;
 
+/**
+ * array definition for constant value array.
+ * @capacity: the capacity of the array
+ * @count: currently used spots from the capacity.
+ * @values: array values;
+ */
 typedef struct {
   int capacity;
   int count;

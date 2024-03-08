@@ -76,7 +76,12 @@ static InterpretResult run() {
 #undef BINARY_OP
 }
 
-InterpretResult interpret(Chunk *chunk) {
+/**
+ * interpret - interprates the chunk and returns INTERPRET_OK.
+ * @chunk: the chunk to interpret.
+ * Return: INTERPRET_OK if successful.
+ */
+InterpretResult interpret(const char *source) {
   compile(source);
   return INTERPRET_OK;
 }

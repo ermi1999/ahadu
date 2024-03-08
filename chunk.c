@@ -11,7 +11,7 @@ void initChunk(Chunk *chunk) {
 	chunk->capacity = 0;
 	chunk->code = NULL;
 	chunk->lines = NULL;
-	initValueArray(&chunk->constants);
+	initValueArray(&chunk->constants); // the constants need to be initialized too.
 }
 
 void freeChunk(Chunk *chunk) {
