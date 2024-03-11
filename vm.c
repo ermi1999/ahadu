@@ -81,7 +81,7 @@ static InterpretResult run() {
  * @chunk: the chunk to interpret.
  * Return: INTERPRET_OK if successful.
  */
-InterpretResult interpret(const char *source) {
+InterpretResult interpret(const wchar_t *source) {
   compile(source);
   return INTERPRET_OK;
 }

@@ -1,6 +1,9 @@
 #ifndef AHADU_SCANNER_H
 #define AHADU_SCANNER_H
 
+#include <wctype.h>
+#include <wchar.h>
+
 typedef enum {
   // Single character tokens.
   TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN,
@@ -31,12 +34,12 @@ typedef enum {
  */
 typedef struct {
   TokenType type;
-  const char *start;
+  const wchar_t *start;
   int length;
   int line;
 } Token;
 
-void initScanner(const char *source);
+void initScanner(const wchar_t *source);
 Token scanToken();
 
 #endif // !AHADU_SCANNER_H

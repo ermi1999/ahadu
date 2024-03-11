@@ -1,6 +1,9 @@
 #ifndef AHADU_VM_H
 #define AHADU_VM_H
 
+#include <wctype.h>
+#include <wchar.h>
+
 #include "chunk.h"
 #include "value.h"
 
@@ -28,7 +31,7 @@ typedef enum {
 
 void initVM();
 void freeVM();
-InterpretResult interpret(const char *source);
+InterpretResult interpret(const wchar_t *source);
 void push(Value value);
 Value pop();
 

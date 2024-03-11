@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wctype.h>
+#include <wchar.h>
+#include <locale.h>
 
 #include "common.h"
 #include "chunk.h"
@@ -8,11 +11,11 @@
 #include "vm.h"
 
 static void repl() {
-  char line[1024];
+  wchar_t line[1024];
   for (;;) {
     printf("> ");
 
-    if (!fgets(line, sizeof(line), stdin)) {
+    if (!fgetws(line, sizeof(line), stdin)) {
       printf("\n");
       break;
     }
@@ -20,36 +23,47 @@ static void repl() {
   }
 }
 
-static char *readFile(const char *path) {
+static wchar_t *readFile(const char *path) {
   FILE *file = fopen(path, "rb");
-
   if (file == NULL) {
     fprintf(stderr, "Could not open file \"%s\".\n", path);
     exit(74);
   }
+
   fseek(file, 0L, SEEK_END);
-  size_t fileSize = ftell(file);
+  long fileSize = ftell(file);
   rewind(file);
 
-  char *buffer = (char*)malloc(fileSize + 1);
-  if (buffer == NULL) {
+  char *utf8Buffer = (char*)malloc(fileSize + 1);
+  if (utf8Buffer == NULL) {
     fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
     exit(74);
   }
 
-  size_t bytesRead = fread(buffer, sizeof(char), fileSize, file);
+  size_t bytesRead = fread(utf8Buffer, 1, fileSize, file);
   if (bytesRead < fileSize) {
     fprintf(stderr, "Could not read file \"%s\".\n", path);
     exit(74);
   }
-  buffer[bytesRead] = '\0';
+  utf8Buffer[bytesRead] = '\0';
 
   fclose(file);
-  return buffer;
+
+  size_t wideSize = mbstowcs(NULL, utf8Buffer, 0) + 1;
+  wchar_t *wideBuffer = (wchar_t*)malloc(wideSize * sizeof(wchar_t));
+  if (wideBuffer == NULL) {
+    fprintf(stderr, "Not enough memory to convert \"%s\".\n", path);
+    exit(74);
+  }
+
+  mbstowcs(wideBuffer, utf8Buffer, wideSize);
+  free(utf8Buffer);
+
+  return wideBuffer;
 }
 
 static void runFile(const char *path) {
-  char *source = readFile(path);
+  wchar_t *source = readFile(path);
   InterpretResult result = interpret(source);
   free(source);
 
@@ -64,6 +78,7 @@ static void runFile(const char *path) {
  */
 int main(int argc, const char *argv[])
 {
+  setlocale(LC_ALL, "");
   initVM();
 
   if (argc == 1) {

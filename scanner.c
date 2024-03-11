@@ -10,8 +10,8 @@
  * @line: the line of the current token for error reporting.
  */
 typedef struct {
-  const char *start;
-  const char *current;
+  const wchar_t *start;
+  const wchar_t *current;
   int line;
 } Scanner;
 
@@ -22,20 +22,20 @@ Scanner scanner;
  * @source: a token to be scanned.
  * Return: nothing.
  */
-void initScanner(const char *source) {
+void initScanner(const wchar_t *source) {
   scanner.start = source;
   scanner.current = source;
   scanner.line = 1;
 }
 
-static bool isAlpha(char c) {
-  return (c >= 'a' && c <= 'z') ||
-    (c >= 'A' && c <= 'Z') ||
+static bool isAlpha(wchar_t c) {
+  return (c >= L'a' && c <= L'z') ||
+    (c >= L'A' && c <= L'Z') ||
     c >= 0x1200 && c <= 0x137F ||
-    c == '_';
+    c == L'_';
 }
 
-static bool isDigit(char c) {
+static bool isDigit(wchar_t c) {
   return c >= '0' && c <= '9';
 }
 
@@ -51,18 +51,18 @@ static bool isAtEnd() {
  * advance - reads the current charcter and returns it.
  * Return: the current character.
  */
-static char advance() {
+static wchar_t advance() {
   scanner.current++;
   return scanner.current[-1];
 }
 
 // peeks the current character and returns it.
-static char peek() {
+static wchar_t peek() {
   return *scanner.current;
 }
 
 // peeks the next character and returns it.
-static char peekNext() {
+static wchar_t peekNext() {
   if (isAtEnd()) return '\0';
   return scanner.current[1];
 }
@@ -72,7 +72,7 @@ static char peekNext() {
  * @expected: the expected character.
  * Return: true if it is false otherwise.
  */
-static bool match(char expected) {
+static bool match(wchar_t expected) {
   if (isAtEnd) return false;
   if (*scanner.current != expected) return false;
   scanner.current++;
@@ -99,11 +99,11 @@ static Token makeToken(TokenType type) {
  * @message: the error message.
  * Return: the error token.
  */
-static Token errorToken(const char *message) {
+static Token errorToken(const wchar_t *message) {
   Token token;
   token.type = TOKEN_ERROR;
   token.start = message;
-  token.length = (int)strlen(message);
+  token.length = (int)wcslen(message);
   token.line = scanner.line;
   return token;
 }
@@ -113,7 +113,7 @@ static Token errorToken(const char *message) {
  */
 static void skipWhitespace() {
   for (;;) {
-    char c = peek();
+    wchar_t c = peek();
     switch (c) {
       case ' ':
       case '\r':
@@ -138,7 +138,7 @@ static void skipWhitespace() {
   }
 }
 
-static TokenType checkKeyword(int start, int length, const char *rest, TokenType type) {
+static TokenType checkKeyword(int start, int length, const wchar_t *rest, TokenType type) {
   if (scanner.current - scanner.start == start + length &&
       memcmp(scanner.start + start, rest, length) == 0) {
         return type;
@@ -148,38 +148,35 @@ static TokenType checkKeyword(int start, int length, const char *rest, TokenType
 }
 
 static TokenType identifierType() {
-    switch (scanner.start[0]) {
-      case 'እ':
+  switch (scanner.start[0]) {
+      case L'እ':
         if (scanner.current - scanner.start > 1) {
           switch (scanner.start[1]) {
-            case 'ና': return TOKEN_AND;
-            case 'ስ': return checkKeyword(2, 1, "ከ", TOKEN_WHILE);
-            case 'ው': return checkKeyword(2, 2, "ነት", TOKEN_TRUE);
-          }
+            case L'ና': return TOKEN_AND;
+            case L'ስ': return checkKeyword(2, 1, L"ከ", TOKEN_WHILE);
+            case L'ው': return checkKeyword(2, 2, L"ነት", TOKEN_TRUE);
+          }        
         }
-        break;
-      case 'ክ': return checkKeyword(1, 2, "ፍል", TOKEN_CLASS);
-      case 'ካ': return checkKeyword(1, 3, "ልሆነ", TOKEN_ELSE);
-      case 'ከ': return checkKeyword(1, 2, "ሆነ", TOKEN_IF);
-      case 'ባ': return checkKeyword(1, 1, "ዶ", TOKEN_NIL);
-      case 'ወ': return checkKeyword(1, 2, "ይም", TOKEN_OR);
-      case 'አ': return checkKeyword(1, 2, "ውጣ", TOKEN_PRINT);
-      case 'መ':
+      case L'ክ': return checkKeyword(1, 2, L"ፍል", TOKEN_CLASS);
+      case L'ካ': return checkKeyword(1, 3, L"ልሆነ", TOKEN_ELSE);
+      case L'ከ': return checkKeyword(1, 2, L"ሆነ", TOKEN_IF);
+      case L'ባ': return checkKeyword(1, 1, L"ዶ", TOKEN_NIL);
+      case L'ወ': return checkKeyword(1, 2, L"ይም", TOKEN_OR);
+      case L'አ': return checkKeyword(1, 2, L"ውጣ", TOKEN_PRINT);
+      case L'መ':
         if (scanner.current - scanner.start > 1) {
-          switch (scanner.start[1]) {
-            case 'ል': return checkKeyword(2, 1, "ስ", TOKEN_RETURN);
-            case 'ለ': return checkKeyword(2, 1, "ያ", TOKEN_VAR);
+            switch (scanner.start[1]) {
+              case L'ል': return checkKeyword(2, 1, L"ስ", TOKEN_RETURN);
+              case L'ለ': return checkKeyword(2, 1, L"ያ", TOKEN_VAR);
+            }
           }
-        }
-        break;
-      case 'ታ': return checkKeyword(1, 2, "ላቅ", TOKEN_SUPER);
-      case 'ሃ': return checkKeyword(1, 2, "ሰት", TOKEN_FALSE);
-      case 'ለ': return checkKeyword(1, 2, "ዚህ", TOKEN_FOR);
-      case 'ተ': return checkKeyword(1, 3, "ግባር", TOKEN_FUN);
-      case 'ይ': return checkKeyword(1, 1, "ህ", TOKEN_THIS);
-
-    return TOKEN_IDENTIFIER;
+      case L'ታ': return checkKeyword(1, 2, L"ላቅ", TOKEN_SUPER);
+      case L'ሃ': return checkKeyword(1, 2, L"ሰት", TOKEN_FALSE);
+      case L'ለ': return checkKeyword(1, 2, L"ዚህ", TOKEN_FOR);
+      case L'ተ': return checkKeyword(1, 3, L"ግባር", TOKEN_FUN);
+      case L'ይ': return checkKeyword(1, 1, L"ህ", TOKEN_THIS);
   }
+  return TOKEN_IDENTIFIER;
 }
 
 static Token identifier() {
@@ -207,7 +204,7 @@ static Token string() {
     advance();
   }
 
-  if (isAtEnd()) return errorToken("Unterminated string.");
+  if (isAtEnd()) return errorToken(L"Unterminated string.");
 
   // it is the closing tag.
   advance();
@@ -221,7 +218,7 @@ Token scanToken() {
 
   if (isAtEnd()) return makeToken(TOKEN_EOF);
 
-  char c = advance();
+  wchar_t c = advance();
   if (isAlpha(c)) return identifier();
   if (isDigit(c)) return number();
 
@@ -252,5 +249,5 @@ Token scanToken() {
     case '"': return string();
   }
 
-  return errorToken("Unexpected character.");
+  return errorToken(L"Unexpected character.");
 }
