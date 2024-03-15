@@ -4,6 +4,8 @@
 #include <wctype.h>
 #include <wchar.h>
 
-void compile(const wchar_t *source);
+#include "vm.h"
+
+bool compile(const wchar_t *source, Chunk *chunk);
 
 #endif // !AHADU_COMPILER_H
