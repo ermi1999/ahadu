@@ -5,6 +5,10 @@
 #include "compiler.h"
 #include "scanner.h"
 
+#ifdef DEBUG_PRINT_CODE
+  #include "debug.h"
+#endif
+
 typedef struct {
   Token current;
   Token previous;
@@ -12,6 +16,12 @@ typedef struct {
   bool panicMode;
 } Parser;
 
+/**
+ * Presedence - the precedence levels for the parser.
+ * PREC_NONE: the lowest precedence level.
+ * PREC_PRIMARY: the highest precedence level.
+ * @note: the precedence levels are used to determine the order of operations for the parser. and they are listed from the lowest to the highest precedence level. it is because C implicitly assigns the lowest value to the first element in an enum and then increments the value for each subsequent element.
+ */
 typedef enum {
   PREC_NONE,
   PREC_ASSIGNMENT,  // =
@@ -37,35 +47,50 @@ typedef struct {
 Parser parser;
 Chunk *compilingChunk;
 
+/**
+ * currentChunk - returns currently compiling chunk.
+ */
 static Chunk *currentChunk() {
   return compilingChunk;
 }
 
+/**
+ * errorAt - handles a syntax error and updates hadError flag to true.
+ */
 static void errorAt(Token *token, const wchar_t *message) {
   if (parser.panicMode) return;
   parser.panicMode = true;
   fprintf(stderr, "[line %d] Error", token->line);
 
   if (token->type == TOKEN_EOF) {
-    fprintf(stderr, " at end");
+      fprintf(stderr, " at end");
   } else if (token->type == TOKEN_ERROR) {
     // Nothing.
   } else {
-    fprintf(stderr, L" at '%.*s'", token->length, token->start);
+    fprintf(stderr, " at '%.*s'", token->length, token->start);
   }
 
-  fprintf(stderr, L": %s\n", message);
+  fprintf(stderr, ": %s\n", message);
   parser.hadError = true;
 }
 
+/**
+ * error - redirects a syntax error to error at.
+ */
 static void error(const wchar_t *message) {
   errorAt(&parser.previous, message);
 }
 
+/**
+ * errorAtCurrent - redirects a syntax error if the scanner returns an error token.
+ */
 static void errorAtCurrent(const wchar_t *message) {
   errorAt(&parser.current, message);
 }
 
+/**
+  * advance - advances the parser to the next token.
+  */
 static void advance() {
   parser.previous = parser.current;
 
@@ -77,6 +102,10 @@ static void advance() {
   }
 }
 
+/**
+* consume - validates is a token is an exepected type and if it is it bumps the token to the next token.
+* @type: the type to check for.
+*/
 static void consume(TokenType type, const wchar_t *message) {
   if (parser.current.type == type) {
     advance();
@@ -86,35 +115,74 @@ static void consume(TokenType type, const wchar_t *message) {
   errorAtCurrent(message);
 }
 
+/**
+  * emitByte - appends (writes) a single byte to chunk.
+  * @byte: the byte to append (write)
+  */
 static void emitByte(uint8_t byte) {
   writeChunk(currentChunk(), byte, parser.previous.line);
 }
 
+/**
+  * emitBytes - appends (writes) two bytes to chunk.
+  * @byte1: the first byte to append (write)
+  * @byte2: the second byte to append (write)
+  */
 static void emitBytes(uint8_t byte1, uint8_t byte2) {
   emitByte(byte1);
   emitByte(byte2);
 }
 
+/**
+  * emitReturn - emits the return instruction.
+  */
 static void emitReturn() {
   emitByte(OP_RETURN);
 }
 
+/**
+  * addConstant - adds a constant to the chunk.
+  * @chunk: the chunk to add the constant to.
+  * @value: the value to add.
+  * @return: the index of the constant.
+  * @TODO: OP_CONSTANT uses a single byte to store the index of the constant, so we can only have 256 constants in a single chunk. add another instruction that stores the index in two bytes.
+  */
 static uint8_t makeConstant(Value value) {
   int constant = addConstant(currentChunk(), value);
   if (constant > UINT8_MAX) {
-    error("Too many constants in one chunk.");
+    error(L"Too many constants in one chunk.");
     return 0;
   }
 
   return (uint8_t)constant;
 }
 
+/**
+  * emitConstant - emits a constant instruction.
+  * @value: the value to emit.
+  */
 static void emitConstant(double value) {
   emitBytes(OP_CONSTANT, makeConstant(value));
 }
 
+/**
+ * endCompiler - ends the compiler and emits the return instruction.
+ */
 static void endCompiler() {
   emitReturn();
+  #ifdef DEBUG_PRINT_CODE
+    if (!parser.hadError) {
+      disassembleChunk(currentChunk(), "code");
+    }
+  #endif
+}
+
+/**
+ * number - compiles a number constant.
+ */
+static void number() {
+  double value = wcstod(parser.previous.start, NULL);
+  emitConstant(value);
 }
 
 static void expression();
@@ -139,12 +207,17 @@ static void binary() {
   }
 }
 
-
+/**
+ * grouping - compiles a grouping / () expression.
+ */
 static void grouping() {
   expression();
-  consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
+  consume(TOKEN_RIGHT_PAREN, L"Expect ')' after expression.");
 }
 
+/**
+ * unary - compiles a unary (-, !) expression.
+ */
 static void unary() {
   TokenType operatorType = parser.previous.type;
 
@@ -158,6 +231,11 @@ static void unary() {
   }
 }
 
+/**
+ * rules - the parse rules for the compiler.
+ * @note: the parse rules are used to determine the precedence and associativity of the operators in the language.
+ 
+ */
 ParseRule rules[] = {
   [TOKEN_LEFT_PAREN]    = {grouping, NULL,   PREC_NONE},
   [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
@@ -203,11 +281,15 @@ ParseRule rules[] = {
   [TOKEN_EOF]           = {NULL,     NULL,   PREC_NONE},
 };
 
+/**
+ * parsePrecedence - parses a precedence level.
+ * @precedence: the precedence level to parse.
+ */
 static void parsePrecedence(Precedence precedence) {
   advance();
   ParseFn prefixRule = getRule(parser.previous.type)->prefix;
   if (prefixRule == NULL) {
-    error("Expect expression.");
+    error(L"Expect expression.");
     return;
   }
 
@@ -224,16 +306,19 @@ static ParseRule *getRule(TokenType type) {
   return &rules[type];
 }
 
-static void number() {
-  double value = wcstod(parser.previous.start, NULL);
-  emitConstant(value);
-}
-
+/**
+ * expression - compiles an expression.
+ */
 static void expression(){
   parsePrecedence(PREC_ASSIGNMENT);
 }
 
-
+/**
+  * initCompiler - initializes the compiler.
+  * @source: the source code to compile.
+  * @chunk: the chunk to initialize.
+  * @return: true if the source code was compiled successfully, false otherwise.
+  */
 bool compile(const wchar_t *source, Chunk *chunk) {
   initScanner(source);
   compilingChunk = chunk;
@@ -243,7 +328,7 @@ bool compile(const wchar_t *source, Chunk *chunk) {
 
   advance();
   expression();
-  consume(TOKEN_EOF, "Expect end of expression.");
+  consume(TOKEN_EOF, L"Expect end of expression.");
   endCompiler();
   return !parser.hadError;
 }
