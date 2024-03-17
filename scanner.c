@@ -171,7 +171,7 @@ static TokenType identifierType() {
             }
           }
       case L'ታ': return checkKeyword(1, 2, L"ላቅ", TOKEN_SUPER);
-      case L'ሃ': return checkKeyword(1, 2, L"ሰት", TOKEN_FALSE);
+      case L'ሀ': return checkKeyword(1, 2, L"ሰት", TOKEN_FALSE);
       case L'ለ': return checkKeyword(1, 2, L"ዚህ", TOKEN_FOR);
       case L'ተ': return checkKeyword(1, 3, L"ግባር", TOKEN_FUN);
       case L'ይ': return checkKeyword(1, 1, L"ህ", TOKEN_THIS);
