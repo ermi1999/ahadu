@@ -1,5 +1,7 @@
-#include "memory.h"
 #include <stdlib.h>
+
+#include "memory.h"
+#include "vm.h"
 
 /**
  * reallocate - handles the realocation of a dynamic array.
@@ -19,4 +21,32 @@ void *reallocate(void *pointer, size_t oldSize, size_t newSize) {
   if (result == NULL)
     exit(1);
   return result;
+}
+
+/**
+ * freeObject - frees an object.
+ * @object: the object to be freed.
+ * Return: nothing.
+ */
+static void freeObject(Obj *object) {
+  switch (object->type) {
+    case OBJ_STRING: {
+      ObjString *string = (ObjString *)object;
+      FREE_ARRAY(wchar_t, string->chars, string->length + 1);
+      FREE(ObjString, object);
+      break;
+    }
+  }
+}
+/**
+ * freeObjects - frees the objects.
+ * Return: nothing.
+ */
+void freeObjects() {
+  Obj *object = vm.objects;
+  while (object != NULL) {
+    Obj *next = object->next;
+    freeObject(object);
+    object = next;
+  }
 }

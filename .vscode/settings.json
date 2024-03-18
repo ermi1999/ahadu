@@ -1,5 +1,9 @@
 {
   "files.associations": {
-    "compiler.h": "c"
+    "compiler.h": "c",
+    "vm.h": "c",
+    "debug.h": "c",
+    "object.h": "c",
+    "memory.h": "c"
   }
 }

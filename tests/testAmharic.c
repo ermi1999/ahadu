@@ -17,6 +17,10 @@ int main(int argc, const char *argv[]) {
         return 1;
     }
 
+    wchar_t print[100] = L"አበበ በሶ በላ";
+
+    wprintf(L"%ls\n", print);
+
     printf("File: %s\n", argv[1]);
     
     wchar_t ena[100];

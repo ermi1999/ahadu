@@ -4,6 +4,7 @@
 #include "common.h"
 #include "compiler.h"
 #include "scanner.h"
+#include "object.h"
 
 #ifdef DEBUG_PRINT_CODE
   #include "debug.h"
@@ -20,7 +21,10 @@ typedef struct {
  * Presedence - the precedence levels for the parser.
  * PREC_NONE: the lowest precedence level.
  * PREC_PRIMARY: the highest precedence level.
- * @note: the precedence levels are used to determine the order of operations for the parser. and they are listed from the lowest to the highest precedence level. it is because C implicitly assigns the lowest value to the first element in an enum and then increments the value for each subsequent element.
+ * @note: the precedence levels are used to determine the order of operations for the parser.
+ *        and they are listed from the lowest to the highest precedence level.
+ *        it is because C implicitly assigns the lowest value to the first element in an enum
+ *        and then increments the value for each subsequent element.
  */
 typedef enum {
   PREC_NONE,
@@ -185,6 +189,13 @@ static void number() {
   emitConstant(NUMBER_VAL(value));
 }
 
+/**
+ * string - compiles a string constant.
+ */
+static void string() {
+  emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
+}
+
 static void expression();
 static ParseRule *getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
@@ -273,7 +284,7 @@ ParseRule rules[] = {
   [TOKEN_LESS]          = {NULL,     binary, PREC_COMPARISON},
   [TOKEN_LESS_EQUAL]    = {NULL,     binary, PREC_COMPARISON},
   [TOKEN_IDENTIFIER]    = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_STRING]        = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_STRING]        = {string,   NULL,   PREC_NONE},
   [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
   [TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
   [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
