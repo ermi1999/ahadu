@@ -44,6 +44,7 @@ static void runtimeError(const wchar_t *format, ...) {
 void initVM() {
   resetStack();
   vm.objects = NULL;
+  initTable(&vm.strings);
 }
 
 /**
@@ -51,6 +52,7 @@ void initVM() {
  * Return: nothing.
  */
 void freeVM() {
+  freeTable(&vm.strings);
   freeObjects();
 }
 
