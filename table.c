@@ -8,17 +8,34 @@
 
 #define TABLE_MAX_LOAD 0.75
 
+/**
+  * initTable - initializes a table.
+  * @table: the table to initialize.
+  * Return: nothing.
+  */
 void initTable(Table *table) {
   table->count = 0;
   table->capacity = 0;
   table->entries = NULL;
 }
 
+/**
+  * freeTable - frees a table.
+  * @table: the table to free.
+  * Return: nothing.
+  */
 void freeTable(Table *table) {
   FREE_ARRAY(Entry, table->entries, table->capacity);
   initTable(table);
 }
 
+/**
+  * findEntry - finds an entry in a table.
+  * @entries: the entries to search.
+  * @capacity: the capacity of the table.
+  * @key: the key to search for.
+  * Return: the entry.
+  */
 static Entry *findEntry(Entry *entries, int capacity, ObjString *key) {
   uint32_t index = key->hash % capacity;
   Entry *tombstone = NULL;
@@ -43,6 +60,13 @@ static Entry *findEntry(Entry *entries, int capacity, ObjString *key) {
   }
 }
 
+/**
+  * tableGet - gets a value from a table.
+  * @table: the table to get the value from.
+  * @key: the key to search for.
+  * @value: the value to get.
+  * Return: true if the value is found, false otherwise.
+  */
 bool tableGet(Table *table, ObjString *key, Value *value) {
   if (table->entries == NULL) return false;
 
@@ -53,6 +77,12 @@ bool tableGet(Table *table, ObjString *key, Value *value) {
   return true;
 }
 
+/**
+  * adjustCapacity - adjusts the capacity of a table.
+  * @table: the table to adjust.
+  * @capacity: the new capacity.
+  * Return: nothing.
+  */
 static void adjustCapacity(Table *table, int capacity) {
   Entry *entries = ALLOCATE(Entry, capacity);
   for (int i = 0; i < capacity; i++) {
@@ -77,6 +107,13 @@ static void adjustCapacity(Table *table, int capacity) {
   table->capacity = capacity;
 }
 
+/**
+  * tableSet - sets a value in a table.
+  * @table: the table to set the value in.
+  * @key: the key to set.
+  * @value: the value to set.
+  * Return: true if the key is new, false otherwise.
+  */
 bool tableSet(Table *table, ObjString *key, Value value) {
   if (table->count + 1 > table->capacity * TABLE_MAX_LOAD) {
     int capacity = GROW_CAPACITY(table->capacity);
@@ -92,6 +129,12 @@ bool tableSet(Table *table, ObjString *key, Value value) {
   return isNewKey;
 }
 
+/**
+  * tableDelete - deletes a value from a table.
+  * @table: the table to delete the value from.
+  * @key: the key to delete.
+  * Return: true if the value is deleted, false otherwise.
+  */
 bool tableDelete(Table *table, ObjString *key) {
   if (table->count == 0) return false;
 
@@ -106,6 +149,12 @@ bool tableDelete(Table *table, ObjString *key) {
   return true;
 }
 
+/**
+  * tableAddAll - adds all entries from one table to another.
+  * @from: the table to add from.
+  * @to: the table to add to.
+  * Return: nothing.
+  */
 void tableAddAll(Table *from, Table *to) {
   for (int i = 0; i < from->capacity; i++) {
     Entry *entry = &from->entries[i];
@@ -115,6 +164,14 @@ void tableAddAll(Table *from, Table *to) {
   }
 }
 
+/**
+  * tableFindString - finds a string in a table.
+  * @table: the table to search.
+  * @chars: the characters to search for.
+  * @length: the length of the characters.
+  * @hash: the hash of the characters.
+  * Return: the string if found, NULL otherwise.
+  */
 ObjString *tableFindString(Table *table, const wchar_t *chars, int length, uint32_t hash) {
   if (table->count == 0) return NULL;
 
