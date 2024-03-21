@@ -4,6 +4,7 @@
     "vm.h": "c",
     "debug.h": "c",
     "object.h": "c",
-    "memory.h": "c"
+    "memory.h": "c",
+    "chunk.h": "c"
   }
 }
