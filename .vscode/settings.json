@@ -5,6 +5,15 @@
     "debug.h": "c",
     "object.h": "c",
     "memory.h": "c",
-    "chunk.h": "c"
+    "chunk.h": "c",
+    "*.tcc": "c",
+    "charconv": "c",
+    "vector": "c",
+    "format": "c",
+    "fstream": "c",
+    "istream": "c",
+    "sstream": "c",
+    "string_view": "c",
+    "*.inc": "c"
   }
 }
