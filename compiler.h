@@ -6,6 +6,6 @@
 
 #include "vm.h"
 
-bool compile(const wchar_t *source, Chunk *chunk);
+ObjFunction *compile(const wchar_t *source);
 
 #endif // !AHADU_COMPILER_H
