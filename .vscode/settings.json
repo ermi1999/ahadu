@@ -14,6 +14,12 @@
     "istream": "c",
     "sstream": "c",
     "string_view": "c",
-    "*.inc": "c"
+    "*.inc": "c",
+    "chrono": "c",
+    "memory_resource": "c",
+    "mutex": "c",
+    "new": "c",
+    "streambuf": "c",
+    "utility": "c"
   }
 }
