@@ -7,5 +7,6 @@
 #include "vm.h"
 
 ObjFunction *compile(const wchar_t *source);
+void markCompilerRoots();
 
 #endif // !AHADU_COMPILER_H
