@@ -2,7 +2,7 @@
 
 **A simple and intuitive programming language in Amharic.**
 
-> our little language is dynamicaly typed and follows c like syntax so you should be familiar with it.
+> our little language is dynamically typed and follows c like syntax so you should be familiar with it.
 
 **to get started**
 
@@ -35,7 +35,7 @@ and the other way is, well, by specifying ahadu file.
 
 ### declaring variables
 
-- declare variable if no value is provided it will explicitly be nil value.
+- declare variable if no value is provided it will explicitly be NULL value which is `ባዶ`.
 
 ```
 መለያ var_name;
@@ -71,11 +71,53 @@ my_function(params)
 - if else
 
 ```
-ከሆነ (consdition) {
+ከሆነ (condition) {
 
 } ካልሆነ {
 
 }
+```
+
+### true false
+
+- true
+  `እውነት`
+
+- false
+  `ሀሰት`
+
+### return statement
+
+```
+ከሆነ (እውነት)
+{
+    መልስ እውነት;
+}
+```
+
+### Logical operators
+
+- not operator
+
+```
+!እውነት //ሀሰት
+!ሀሰት //እውነት
+```
+
+- and operator
+
+```
+እውነት እና እውነት  /‌/ እውነት
+እውነት እና ሀሰት  // ሀሰት
+ሀሰት እና ሀሰት  // ሀሰት
+```
+
+- or operator
+
+```
+እውነት ወይም እውነት  /‌/ እውነት
+እውነት ወይም ሀሰት  // እውነት
+ሀሰት ወይም ሀሰት  // ሀሰት
 ```
 
 ### loops
