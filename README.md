@@ -1,6 +1,8 @@
 # Ahadu
 
-A simple and intuitive programming language in Amharic.
+**A simple and intuitive programming language in Amharic.**
+
+> our little language is dynamicaly typed and follows c like syntax so you should be familiar with it.
 
 **to get started**
 
@@ -31,7 +33,129 @@ and the other way is, well, by specifying ahadu file.
 ./ahadu file
 ```
 
-the language is in active development, full documentation coming soon.
+### declaring variables
+
+- declare variable if no value is provided it will explicitly be nil value.
+
+```
+መለያ var_name;
+```
+
+- you can assign a value to it right away
+
+```
+መለያ var_name = value;
+```
+
+> [!NOTE]
+> values can be anything of any type, it can be _true_ which is `እውነት` or _false_ which is `ሀሰት` or you could specificaly set it to be _null_ value which is `ባዶ`.
+
+### defining functions
+
+- define
+
+```
+ተግባር my_function(param1, param_2) {
+    function body
+}
+```
+
+- function calls
+
+```
+my_function(params)
+```
+
+### conditionals
+
+- if else
+
+```
+ከሆነ (consdition) {
+
+} ካልሆነ {
+
+}
+```
+
+### loops
+
+- for loop
+
+```
+ለዚህ(declaration; condition; increment) {
+    loop body
+}
+```
+
+- while loops
+
+```
+እስከ(condition) {
+    loop body
+}
+```
+
+### print statement
+
+```
+አውጣ value;
+```
+
+### classes
+
+- declaration
+
+```
+ክፍል class_name {
+    class body
+}
+```
+
+- initializers
+
+> [!NOTE]
+> as you know them in python \_\_init\_\_ functions are called `ማስጀመሪያ` the function will be run whenever you create a new instance of the class.
+
+```
+ክፍል class_name {
+    ማስጀመሪያ(param1, param2) {
+
+    }
+}
+```
+
+- creating an instance
+
+> [!NOTE]
+> the initializer(ማስጀመሪያ) params should be passed to the class when creating a new instance of that class
+
+```
+መለያ new_instance = class_name(param1, param2);
+```
+
+- to refer to the class itself in the class body you can use `ይህ`,
+  here i am defining a class method and attribute and i am accessing the classes attribut with `ይህ`
+
+```
+ክፍል class_name {
+    ማስጀመሪያ(param1, param2) {
+        ይህ.param1 = param1;
+        ይህ.param2 = param2;
+    }
+
+    class_method(params) {
+        አውጣ ይህ.param1;
+    }
+}
+```
+
+> [!NOTE]
+> The language is in early stages it lacks a lot of futures, if you want to contribute you can get started with writing some native functions.
+
+> This readme should help you get started, i know there is things that i didn't covered yet but i will come up with a documentation which explains everything.
+
+> I know writing amharic programming language and writing the readme in english seems silly but i am working on a full documentation i will incude it there.
 
 **_Acknowledgement_**
 
