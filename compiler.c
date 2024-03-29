@@ -89,6 +89,7 @@ typedef struct Compiler
 typedef struct ClassCompiler
 {
   struct ClassCompiler *enclosing;
+  bool hasSuperclass;
 } ClassCompiler;
 
 Parser parser;
@@ -598,6 +599,77 @@ static void variable(bool canAssign)
 }
 
 /**
+ * argumentList - compiles an argument list.
+ * @return: the number of arguments.
+ */
+static uint8_t argumentList()
+{
+  uint8_t argCount = 0;
+  if (!check(TOKEN_RIGHT_PAREN))
+  {
+    do
+    {
+      expression();
+      if (argCount == 255)
+      {
+        error("Cannot have more than 255 arguments.");
+      }
+      argCount++;
+    } while (match(TOKEN_COMMA));
+  }
+
+  consume(TOKEN_RIGHT_PAREN, "Expect ')' after arguments.");
+  return argCount;
+}
+
+/**
+ * syntheticToken - creates a synthetic token.
+ * @text: the text of the token.
+ * @return: the synthetic token.
+ */
+static Token syntheticToken(const wchar_t *text)
+{
+  Token token;
+  token.start = text;
+  token.length = (int)wcslen(text);
+  return token;
+}
+
+/**
+ * super_ - compiles a super expression.
+ */
+static void super_(bool canAssign)
+{
+  if (currentClass == NULL)
+  {
+    error("Can't use 'super' outside of a class.");
+  }
+  else if (!currentClass->hasSuperclass)
+  {
+    error("can't use 'super' in a class with no superclass.");
+  }
+
+  consume(TOKEN_DOT, "Expect '.' after 'super'.");
+  consume(TOKEN_IDENTIFIER, "Expect superclass method name.");
+  uint8_t name = identifierConstant(&parser.previous);
+
+  namedVariable(syntheticToken(L"ይህ"), false);
+
+  if (match(TOKEN_LEFT_PAREN))
+  {
+    uint8_t argCount = argumentList();
+    namedVariable(syntheticToken(L"ታላቅ"), false);
+    emitBytes(OP_SUPER_INVOKE, name);
+    emitByte(argCount);
+  }
+  else
+  {
+    namedVariable(syntheticToken(L"ታላቅ"), false);
+    emitBytes(OP_GET_SUPER, name);
+  }
+}
+
+/**
  * this_ - compiles a this expression.
  */
 static void this_(bool canAssign)
@@ -655,30 +727,6 @@ static void binary(bool canAssign)
   default:
     return; // Unreachable.
   }
-}
-
-/**
- * argumentList - compiles an argument list.
- * @return: the number of arguments.
- */
-static uint8_t argumentList()
-{
-  uint8_t argCount = 0;
-  if (!check(TOKEN_RIGHT_PAREN))
-  {
-    do
-    {
-      expression();
-      if (argCount == 255)
-      {
-        error("Cannot have more than 255 arguments.");
-      }
-      argCount++;
-    } while (match(TOKEN_COMMA));
-  }
-
-  consume(TOKEN_RIGHT_PAREN, "Expect ')' after arguments.");
-  return argCount;
 }
 
 /**
@@ -822,7 +870,7 @@ ParseRule rules[] = {
     [TOKEN_OR] = {NULL, or_, PREC_OR},
     [TOKEN_PRINT] = {NULL, NULL, PREC_NONE},
     [TOKEN_RETURN] = {NULL, NULL, PREC_NONE},
-    [TOKEN_SUPER] = {NULL, NULL, PREC_NONE},
+    [TOKEN_SUPER] = {super_, NULL, PREC_NONE},
     [TOKEN_THIS] = {this_, NULL, PREC_NONE},
     [TOKEN_TRUE] = {literal, NULL, PREC_NONE},
     [TOKEN_VAR] = {NULL, NULL, PREC_NONE},
@@ -993,9 +1041,28 @@ static void classDeclaration()
   defineVariable(nameConstant);
 
   ClassCompiler classCompiler;
+  classCompiler.hasSuperclass = false;
   classCompiler.enclosing = currentClass;
   currentClass = &classCompiler;
 
+  if (match(TOKEN_LESS))
+  {
+    consume(TOKEN_IDENTIFIER, "Expect superclass name.");
+    variable(false);
+
+    if (identifiersEqual(&className, &parser.previous))
+    {
+      error("A class cannot inherit from itself.");
+    }
+
+    beginScope();
+    addLocal(syntheticToken(L"ታላቅ"));
+    defineVariable(0);
+
+    namedVariable(className, false);
+    emitByte(OP_INHERIT);
+    classCompiler.hasSuperclass = true;
+  }
   namedVariable(className, false);
   consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
   while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF))
@@ -1004,6 +1071,11 @@ static void classDeclaration()
   }
   consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
   emitByte(OP_POP);
+
+  if (classCompiler.hasSuperclass)
+  {
+    endScope();
+  }
 
   currentClass = currentClass->enclosing;
 }
