@@ -47,15 +47,15 @@ static void runtimeError(const wchar_t *format, ...)
     ObjFunction *function = frame->closure->function;
     // -1 because the IP is sitting on the next instruction to be executed.
     size_t instruction = frame->ip - function->chunk.code - 1;
-    fprintf(stderr, "[line %d] in ",
-            function->chunk.lines[instruction]);
+    fwprintf(stderr, L"[መስመር %d] ",
+             function->chunk.lines[instruction]);
     if (function->name == NULL)
     {
-      fprintf(stderr, "script\n");
+      fwprintf(stderr, L"script\n");
     }
     else
     {
-      fprintf(stderr, "%ls()\n", function->name->chars);
+      fwprintf(stderr, L"%ls() ውስጥ\n", function->name->chars);
     }
   }
 
@@ -142,7 +142,7 @@ static bool call(ObjClosure *closure, int argCount)
 {
   if (argCount != closure->function->arity)
   {
-    runtimeError(L"Expected %d arguments but got %d.", closure->function->arity, argCount);
+    runtimeError(L"%d የተግባር መለኪያዎች ተጠብቀው የተሰጡት ግን %d ነው።", closure->function->arity, argCount);
     return false;
   }
 
@@ -181,7 +181,7 @@ static bool callValue(Value callee, int argCount)
       }
       else if (argCount != 0)
       {
-        runtimeError(L"Expected 0 arguments but got %d.", argCount);
+        runtimeError(L"0 የተግባር መለኪያዎች ተጠብቆ የተሰጠው ግን %d ነው።", argCount);
         return false;
       }
       return true;
@@ -200,7 +200,7 @@ static bool callValue(Value callee, int argCount)
       break; // Non-callable object type.
     }
   }
-  runtimeError(L"Can only call functions and classes.");
+  runtimeError(L"ተግባር ወይም ክፍልን ብቻ ነው መጥራት የሚቻለው።");
   return false;
 }
 
@@ -209,7 +209,7 @@ static bool invokeFromClass(ObjClass *klass, ObjString *name, int argCount)
   Value method;
   if (!tableGet(&klass->methods, name, &method))
   {
-    runtimeError(L"Undefined property '%ls'.", name->chars);
+    runtimeError(L"ያልተገለጸ አባል '%ls'.", name->chars);
     return false;
   }
   return call(AS_CLOSURE(method), argCount);
@@ -238,7 +238,7 @@ static bool bindMethod(ObjClass *klass, ObjString *name)
   Value method;
   if (!tableGet(&klass->methods, name, &method))
   {
-    runtimeError(L"Undefined property '%ls'.", name->chars);
+    runtimeError(L"ያልተገለጸ አባል '%ls'.", name->chars);
     return false;
   }
 

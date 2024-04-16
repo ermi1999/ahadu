@@ -108,16 +108,16 @@ static Chunk *currentChunk()
 /**
  * errorAt - handles a syntax error and updates hadError flag to true.
  */
-static void errorAt(Token *token, const char *message)
+static void errorAt(Token *token, const wchar_t *message)
 {
   if (parser.panicMode)
     return;
   parser.panicMode = true;
-  fprintf(stderr, "[line %d] Error", token->line);
+  fwprintf(stderr, L"[መስመር %d] ላይ ስህተት", token->line);
 
   if (token->type == TOKEN_EOF)
   {
-    fprintf(stderr, " at end");
+    fwprintf(stderr, L" መጨረሻ ላይ");
   }
   else if (token->type == TOKEN_ERROR)
   {
@@ -125,17 +125,17 @@ static void errorAt(Token *token, const char *message)
   }
   else
   {
-    fprintf(stderr, " at '%.*s'", token->length, token->start);
+    fwprintf(stderr, L" '%.*s' ጋ", token->length, token->start);
   }
 
-  fprintf(stderr, ": %s\n", message);
+  fwprintf(stderr, L": %s\n", message);
   parser.hadError = true;
 }
 
 /**
  * error - redirects a syntax error to error at.
  */
-static void error(const char *message)
+static void error(const wchar_t *message)
 {
   errorAt(&parser.previous, message);
 }
@@ -143,7 +143,7 @@ static void error(const char *message)
 /**
  * errorAtCurrent - redirects a syntax error if the scanner returns an error token.
  */
-static void errorAtCurrent(const char *message)
+static void errorAtCurrent(const wchar_t *message)
 {
   errorAt(&parser.current, message);
 }
@@ -161,7 +161,7 @@ static void advance()
     if (parser.current.type != TOKEN_ERROR)
       break;
 
-    errorAtCurrent((char *)parser.current.start);
+    errorAtCurrent(parser.current.start);
   }
 }
 
@@ -169,7 +169,7 @@ static void advance()
  * consume - validates is a token is an exepected type and if it is it bumps the token to the next token.
  * @type: the type to check for.
  */
-static void consume(TokenType type, const char *message)
+static void consume(TokenType type, const wchar_t *message)
 {
   if (parser.current.type == type)
   {
@@ -224,7 +224,7 @@ static void emitLoop(int loopStart)
   int offset = currentChunk()->count - loopStart + 2;
   if (offset > UINT16_MAX)
   {
-    error("Loop body too large.");
+    error(L"ተመላላሹ በጣም ትልቅ ነው።");
   }
 
   emitByte((offset >> 8) & 0xff);
@@ -267,7 +267,7 @@ static uint8_t makeConstant(Value value)
   int constant = addConstant(currentChunk(), value);
   if (constant > UINT8_MAX)
   {
-    error("Too many constants in one chunk.");
+    error(L"በ አንድ ቸንክ ውስጥ ብዙ መረጃዎች።");
     return 0;
   }
 
@@ -290,7 +290,7 @@ static void patchJump(int offset)
 
   if (jump > UINT16_MAX)
   {
-    error("Too much code to jump over.");
+    error(L"ኮዱን ለመዝለል አስቸጋሪ ነው።");
   }
 
   currentChunk()->code[offset] = (jump >> 8) & 0xff;
@@ -409,7 +409,7 @@ static int resolveLocal(Compiler *compiler, Token *name)
     {
       if (local->depth == -1)
       {
-        error("Cannot read local variable in its own initializer.");
+        error(L"የ ክልል መለያን የሚሰየምበት ቦታ ላይ ማንበብ አይቻልም።");
       }
       return i;
     }
@@ -440,7 +440,7 @@ static int addUpvalue(Compiler *compiler, uint8_t index, bool isLocal)
 
   if (upvalueCount == UINT8_COUNT)
   {
-    error("Too many closure variables in function.");
+    error(L"Too many closure variables in function.");
     return 0;
   }
 
@@ -478,7 +478,7 @@ static void addLocal(Token name)
 {
   if (current->localCount == UINT8_COUNT)
   {
-    error("Too many local variables in function.");
+    error(L"በ አንድ ተግባር ውስጥ ብዙ የክልል መለያዎች።");
     return;
   }
 
@@ -508,7 +508,7 @@ static void declareVariable()
 
     if (identifiersEqual(name, &local->name))
     {
-      error("Variable with this name already declared in this scope.");
+      error(L"ተመሳሳይ የመለያ ስም በእይታ ውስጣ አለ።");
     }
   }
 
@@ -612,13 +612,13 @@ static uint8_t argumentList()
       expression();
       if (argCount == 255)
       {
-        error("Cannot have more than 255 arguments.");
+        error(L"ከ 255 በላይ የ ተግባር መለኪያዎችን መስጠት አይቻልም።");
       }
       argCount++;
     } while (match(TOKEN_COMMA));
   }
 
-  consume(TOKEN_RIGHT_PAREN, "Expect ')' after arguments.");
+  consume(TOKEN_RIGHT_PAREN, L"ከ ተግባር መለኪያዎች በሗላ ')' ያስፈልጋል።");
   return argCount;
 }
 
@@ -642,15 +642,15 @@ static void super_(bool canAssign)
 {
   if (currentClass == NULL)
   {
-    error("Can't use 'super' outside of a class.");
+    error(L"ታላቅን ከ ክፍል ውጪ መጠቀም አይቻልም።");
   }
   else if (!currentClass->hasSuperclass)
   {
-    error("can't use 'super' in a class with no superclass.");
+    error(L"ታላቅን ታላቅ ክፍል የሌለው ክፍል ውስጥ መጠቀም አይቻልም።");
   }
 
-  consume(TOKEN_DOT, "Expect '.' after 'super'.");
-  consume(TOKEN_IDENTIFIER, "Expect superclass method name.");
+  consume(TOKEN_DOT, L"ከ 'ታላቅ' በሗላ '.' ያስፈልጋል።");
+  consume(TOKEN_IDENTIFIER, L"የ 'ታላቅ' ክፍል ተግባር ስም ያስፈልጋል።");
   uint8_t name = identifierConstant(&parser.previous);
 
   namedVariable(syntheticToken(L"ይህ"), false);
@@ -676,7 +676,7 @@ static void this_(bool canAssign)
 {
   if (currentClass == NULL)
   {
-    error("Cannot use 'this' outside of a class.");
+    error(L"ከ ክፍል ውጪ 'ይህ'ን መጠቀም አይቻልም።");
     return;
   }
   variable(false);
@@ -745,7 +745,7 @@ static void call(bool canAssign)
  */
 static void dot(bool canAssign)
 {
-  consume(TOKEN_IDENTIFIER, "Expect property name after '.'.");
+  consume(TOKEN_IDENTIFIER, L"ከ'.' በሗላ የንብረቱ ስም ያስፈልጋል።");
   uint8_t name = identifierConstant(&parser.previous);
 
   if (canAssign && match(TOKEN_EQUAL))
@@ -789,7 +789,7 @@ static void literal(bool canAssign)
 static void grouping(bool canAssign)
 {
   expression();
-  consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
+  consume(TOKEN_RIGHT_PAREN, L"ከመግለፃው በሗላ ')' ያስፈልጋል።");
 }
 
 /**
@@ -891,7 +891,7 @@ static void parsePrecedence(Precedence precedence)
   ParseFn prefixRule = getRule(parser.previous.type)->prefix;
   if (prefixRule == NULL)
   {
-    error("Expect expression.");
+    error(L"አገላለጽ ያስፈልጋል።");
     return;
   }
 
@@ -907,7 +907,7 @@ static void parsePrecedence(Precedence precedence)
 
   if (canAssign && match(TOKEN_EQUAL))
   {
-    error("Invalid assignment target.");
+    error(L"ልክ ያልሆነ ኢላማ ላይ ነው ለመመደብ የሞከርከው።");
   }
 }
 
@@ -916,7 +916,7 @@ static void parsePrecedence(Precedence precedence)
  * @errorMessage: the error message to display if the variable is not found.
  * @return: the index of the variable.
  */
-static uint8_t parseVariable(const char *errorMessage)
+static uint8_t parseVariable(const wchar_t *errorMessage)
 {
   consume(TOKEN_IDENTIFIER, errorMessage);
   declareVariable();
@@ -972,7 +972,7 @@ static void block()
     declaration();
   }
 
-  consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
+  consume(TOKEN_RIGHT_BRACE, L"ከአጥር በሗላ '}' ያስፈልጋል።");
 }
 
 /**
@@ -985,7 +985,7 @@ static void function(FunctionType type)
   initCompiler(&compiler, type);
   beginScope();
 
-  consume(TOKEN_LEFT_PAREN, "Expect '(' after function name.");
+  consume(TOKEN_LEFT_PAREN, L"ከ ተግባር ስም በሗላ '(' ያስፈልጋል።");
 
   if (!check(TOKEN_RIGHT_PAREN))
   {
@@ -994,16 +994,16 @@ static void function(FunctionType type)
       current->function->arity++;
       if (current->function->arity > 255)
       {
-        errorAtCurrent("Cannot have more than 255 parameters.");
+        errorAtCurrent(L"ከ 255 በላይ መለኪያዎችን መጠቀም አይቻልም።");
       }
 
-      uint8_t constant = parseVariable("Expect parameter name.");
+      uint8_t constant = parseVariable(L"የመለኪያ ስም ያስፈልጋል።");
       defineVariable(constant);
     } while (match(TOKEN_COMMA));
   }
 
-  consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
-  consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
+  consume(TOKEN_RIGHT_PAREN, L"ከተግባር መለኪያዎች በሗላ ')' ያስፈልጋል።");
+  consume(TOKEN_LEFT_BRACE, L"ከተግባር አካል በፊት '{' ያስፈልጋል።");
   block();
 
   ObjFunction *function = endCompiler();
@@ -1018,7 +1018,7 @@ static void function(FunctionType type)
 
 static void method()
 {
-  consume(TOKEN_IDENTIFIER, "Expect method name.");
+  consume(TOKEN_IDENTIFIER, L"የ ክፍል ተግባር ስም ያስፈልጋል።");
   uint8_t constant = identifierConstant(&parser.previous);
 
   FunctionType type = TYPE_METHOD;
@@ -1032,7 +1032,7 @@ static void method()
 
 static void classDeclaration()
 {
-  consume(TOKEN_IDENTIFIER, "Expect class name.");
+  consume(TOKEN_IDENTIFIER, L"የ ክፍል ስም ያስፈልጋል።");
   Token className = parser.previous;
   uint8_t nameConstant = identifierConstant(&parser.previous);
   declareVariable();
@@ -1047,12 +1047,12 @@ static void classDeclaration()
 
   if (match(TOKEN_LESS))
   {
-    consume(TOKEN_IDENTIFIER, "Expect superclass name.");
+    consume(TOKEN_IDENTIFIER, L"የታላቅ ክፍል ስም ያስፈልጋል።");
     variable(false);
 
     if (identifiersEqual(&className, &parser.previous))
     {
-      error("A class cannot inherit from itself.");
+      error(L"ክፍል እራሱን ሊወርስ አይችልም።");
     }
 
     beginScope();
@@ -1064,12 +1064,12 @@ static void classDeclaration()
     classCompiler.hasSuperclass = true;
   }
   namedVariable(className, false);
-  consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
+  consume(TOKEN_LEFT_BRACE, L"ከክፍል አካል በፊት '{' ያስፈልጋል።");
   while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF))
   {
     method();
   }
-  consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
+  consume(TOKEN_RIGHT_BRACE, L"ከክፍል አካል በሗላ '}' ያስፈልጋል።");
   emitByte(OP_POP);
 
   if (classCompiler.hasSuperclass)
@@ -1085,7 +1085,7 @@ static void classDeclaration()
  */
 static void funDeclaration()
 {
-  uint8_t global = parseVariable("Expect function name.");
+  uint8_t global = parseVariable(L"የተግባር ስም ያስፈልጋል።");
   markInitialized();
   function(TYPE_FUNCTION);
   defineVariable(global);
@@ -1096,7 +1096,7 @@ static void funDeclaration()
  */
 static void varDeclaration()
 {
-  uint8_t global = parseVariable("Expect variable name.");
+  uint8_t global = parseVariable(L"የመለያ ስም ያስፈልጋል።");
 
   if (match(TOKEN_EQUAL))
   {
@@ -1107,7 +1107,7 @@ static void varDeclaration()
     emitByte(OP_NIL);
   }
 
-  consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration.");
+  consume(TOKEN_SEMICOLON, L"ከ መለያ ገለጻ በሗላ ';' ያስፈልጋል።");
 
   defineVariable(global);
 }
@@ -1118,7 +1118,7 @@ static void varDeclaration()
 static void expressionStatement()
 {
   expression();
-  consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
+  consume(TOKEN_SEMICOLON, L"ከመግለጻ በሗላ ';' ያስፈልጋል።");
   emitByte(OP_POP);
 }
 
@@ -1128,7 +1128,7 @@ static void expressionStatement()
 static void forStatement()
 {
   beginScope();
-  consume(TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
+  consume(TOKEN_LEFT_PAREN, L"ከ'ለዚህ' በሗላ '(' ያስፈልጋል።");
   if (match(TOKEN_SEMICOLON))
   {
     // No initializer.
@@ -1147,7 +1147,7 @@ static void forStatement()
   if (!match(TOKEN_SEMICOLON))
   {
     expression();
-    consume(TOKEN_SEMICOLON, "Expect ';' after loop condition.");
+    consume(TOKEN_SEMICOLON, L"ከተደጋጋሚ 'ሁኔታ' በሗላ ';' ያስፈልጋል።");
 
     // Jump out of the loop if the condition is false.
     exitJump = emitJump(OP_JUMP_IF_FALSE);
@@ -1161,7 +1161,7 @@ static void forStatement()
     int incrementStart = currentChunk()->count;
     expression();
     emitByte(OP_POP);
-    consume(TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
+    consume(TOKEN_RIGHT_PAREN, L"ከ'እስከ' አንቀጾች በሗላ ')' ያስፈልጋል");
 
     emitLoop(loopStart);
     loopStart = incrementStart;
@@ -1185,9 +1185,9 @@ static void forStatement()
  */
 static void ifStatement()
 {
-  consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
+  consume(TOKEN_LEFT_PAREN, L"ከ'ከሆነ' በሗላ '(' ያስፈልጋል።");
   expression();
-  consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+  consume(TOKEN_RIGHT_PAREN, L"ከ'ሁኔታው' በሗላ ')' ያስፈልጋል።");
 
   // reserves space for a jump instruction.
   int thenJump = emitJump(OP_JUMP_IF_FALSE);
@@ -1212,7 +1212,7 @@ static void ifStatement()
 static void printStatement()
 {
   expression();
-  consume(TOKEN_SEMICOLON, "Expect ';' after a value");
+  consume(TOKEN_SEMICOLON, L"ከመረጃው በሗላ ';' ያስፈልጋል።");
   emitByte(OP_PRINT);
 }
 
@@ -1223,7 +1223,7 @@ static void returnStatement()
 {
   if (current->type == TYPE_SCRIPT)
   {
-    error("Cannot return from top-level code.");
+    error(L"ከመጀመሪያ ደረጃ ኮድ መልስ መስጠት አይቻልም።");
   }
   if (match(TOKEN_SEMICOLON))
   {
@@ -1233,11 +1233,11 @@ static void returnStatement()
   {
     if (current->type == TYPE_INITIALIZER)
     {
-      error("Cannot return a value from an initializer.");
+      error(L"ከማስጀመሪያ መረጃ መልስ መስጠት አይቻልም።");
     }
 
     expression();
-    consume(TOKEN_SEMICOLON, "Expect ';' after return value.");
+    consume(TOKEN_SEMICOLON, L"ከመልስ በሗላ ';' ያስፈልጋል።");
     emitByte(OP_RETURN);
   }
 }
@@ -1249,9 +1249,9 @@ static void whileStatement()
 {
   int loopStart = currentChunk()->count;
 
-  consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
+  consume(TOKEN_LEFT_PAREN, L"ከ'እስከ' በሗላ '(' ያስፈልጋል።");
   expression();
-  consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+  consume(TOKEN_RIGHT_PAREN, L"ከ 'ሁኔታው' በሗላ ')' ያስፈልጋል።");
 
   int exitJump = emitJump(OP_JUMP_IF_FALSE);
 
