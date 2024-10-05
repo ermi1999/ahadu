@@ -26,7 +26,7 @@ static void repl() {
 static wchar_t *readFile(const char *path) {
   FILE *file = fopen(path, "rb");
   if (file == NULL) {
-    fprintf(stderr, "Could not open file \"%s\".\n", path);
+    fprintf(stderr, "ፋይሉን መክፈት አልተቻለም \"%s\".\n", path);
     exit(74);
   }
 
@@ -36,13 +36,13 @@ static wchar_t *readFile(const char *path) {
 
   char *utf8Buffer = (char*)malloc(fileSize + 1);
   if (utf8Buffer == NULL) {
-    fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
+    fprintf(stderr, "ፋይሉን ለማንበብ በቂ የሆነ ቦታ የለም \"%s\".\n", path);
     exit(74);
   }
 
   size_t bytesRead = fread(utf8Buffer, 1, fileSize, file);
   if (bytesRead < fileSize) {
-    fprintf(stderr, "Could not read file \"%s\".\n", path);
+    fprintf(stderr, "ፋይሉን ማንበብ አልተቻለም \"%s\".\n", path);
     exit(74);
   }
   utf8Buffer[bytesRead] = '\0';
@@ -86,7 +86,7 @@ int main(int argc, const char *argv[])
   } else if (argc == 2) {
     runFile(argv[1]);
   } else {
-    fprintf(stderr, "Usage: ahadu [path]\n");
+    fprintf(stderr, "አጠቃቀም: ahadu [የፋይል ቦታ]\n");
     exit(64);
   }
 
