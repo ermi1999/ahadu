@@ -9,7 +9,7 @@
 > [!NOTE]
 > The project currently only supports unix like systems, but i am currently working on to support windows.
 
-> clone the repo
+clone the repo
 
 ```bash
 git clone https://github.com/ermi1999/ahadu.git && cd ahadu
