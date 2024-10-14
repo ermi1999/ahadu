@@ -6,6 +6,9 @@
 
 **to get started**
 
+> [!NOTE]
+> The project currently only supports unix like systems, but i am currently working on to support windows.
+
 > clone the repo
 
 ```bash
