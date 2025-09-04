@@ -12,7 +12,11 @@
 clone the repo
 
 ```bash
-git clone https://github.com/ermi1999/ahadu.git && cd ahadu
+git clone https://github.com/ermi1999/ahadu.git
+cd ahadu
+
+# Build from the source
+make
 ```
 
 you can get started writing ahadu in two ways, one is through the **interactive shell** (**REPL**).
@@ -21,7 +25,10 @@ you can get started writing ahadu in two ways, one is through the **interactive 
 > make sure your terminal supports [ethiopic](<https://en.wikipedia.org/wiki/Ethiopic_(Unicode_block)>) unicode, and that it is UTF-8 encoded.
 
 ```bash
-./ahadu
+make run
+# or
+./bin/ahadu
+
 > አውጣ "አበበ በሶ በላ።";
 አበበ በሶ በላ።
 >
@@ -33,7 +40,7 @@ and the other way is, well, by specifying ahadu file.
 > any text file would work just make sure it is UTF-8 encoded, in the future we will give our little language an extention after the file name so that we will support syntax highlighting.
 
 ```bash
-./ahadu file
+./bin/ahadu file
 ```
 
 ### declaring variables
